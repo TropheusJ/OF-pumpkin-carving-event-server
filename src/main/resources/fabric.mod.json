@@ -1,25 +1,25 @@
 {
   "schemaVersion": 1,
-  "id": "modid",
+  "id": "backend",
   "version": "${version}",
-  "name": "Example Mod",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "name": "OF Discord Halloween event backend",
+  "description": "The mod holding together the backend for the OptiFine Discord Halloween event",
   "authors": [
     "Tropheus Jay"
   ],
   "contact": {
-    "sources": "https://github.com/TropheusJ/fabric-example-mod"
+    "sources": "https://github.com/TropheusJ/OF-halloween-event-backend"
   },
   "license": "MIT",
-  "icon": "assets/modid/icon.png",
+  "icon": "assets/backend/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "io.github.tropheusj.modid.ExampleMod"
+      "io.github.tropheusj.backend.Backend"
     ]
   },
   "mixins": [
-    "modid.mixins.json"
+    "backend.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.11.6",
