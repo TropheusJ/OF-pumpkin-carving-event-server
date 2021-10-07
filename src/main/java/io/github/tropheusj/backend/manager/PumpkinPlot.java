@@ -1,13 +1,19 @@
 package io.github.tropheusj.backend.manager;
 
 import io.github.flemmli97.flan.event.ItemInteractEvents;
+import io.github.tropheusj.backend.Backend;
 import io.github.tropheusj.backend.mixin.ArmorStandEntityAccessor;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.structure.StructurePlacementData;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.world.ServerWorldAccess;
+
+import java.util.Random;
 
 public class PumpkinPlot {
 	public int index;
@@ -37,7 +43,7 @@ public class PumpkinPlot {
 		world.spawnEntity(armorStand);
 		ItemInteractEvents.claimLandHandling(manager.dummyPlayer, pumpkin.add(-1, -1, -1));
 		ItemInteractEvents.claimLandHandling(manager.dummyPlayer, pumpkin.add(1, 1, 1));
-		world.setBlockState(pumpkin, Blocks.JACK_O_LANTERN.getDefaultState());
+		world.getStructureManager().getStructure(Backend.id("test")).get().place(world,pumpkin,pumpkin, new StructurePlacementData(), new Random(), 1);
 	}
 
 	public static PumpkinPlot fromNbt(NbtCompound nbt, ServerWorld world, Manager manager) {
