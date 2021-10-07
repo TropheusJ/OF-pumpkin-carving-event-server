@@ -1,5 +1,7 @@
 package io.github.tropheusj.backend.manager;
 
+import com.mojang.authlib.GameProfile;
+
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -14,6 +16,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class Manager extends PersistentState {
 	public static final BlockPos SPAWN = new BlockPos(-5, 70, -5);
@@ -22,9 +25,12 @@ public class Manager extends PersistentState {
 	public Collection<PumpkinPlot> plots;
 	public final Map<String, PumpkinPlot> playersToPlots = new HashMap<>();
 	public BlockPos lastPumpkin = FIRST_PUMPKIN;
+	public ServerPlayerEntity dummyPlayer;
 
 	public Manager(ServerWorld toManage, @Nullable NbtCompound nbt) {
 		this.world = toManage;
+		// one of Ella's alts, we need a dummy player to hold the server wide claims
+		dummyPlayer = new ServerPlayerEntity(world.getServer(), world, new GameProfile(UUID.fromString("c0a17033-6f53-4492-8987-eaa147317202"), "DeesseLouve"));
 		if (nbt != null) {
 			readNbt(nbt);
 		}
@@ -39,7 +45,7 @@ public class Manager extends PersistentState {
 		String playerId = player.getUuidAsString();
 		PumpkinPlot plot = playersToPlots.get(playerId);
 		if (plot != null) return new Pair<>(plot, false);
-		plot = new PumpkinPlot(world, playersToPlots.size(), lastPumpkin.offset(Direction.WEST, 7), playerId);
+		plot = new PumpkinPlot(this, world, playersToPlots.size(), lastPumpkin.offset(Direction.WEST, 7), playerId);
 		addPlot(plot);
 		return new Pair<>(plot, true);
 	}
@@ -54,7 +60,7 @@ public class Manager extends PersistentState {
 	public void readNbt(NbtCompound nbt) {
 		int plotCount = nbt.getInt("PumpkinPlotCount");
 		for (int i = 0; i < plotCount; i++) {
-			PumpkinPlot plot = PumpkinPlot.fromNbt(nbt.getCompound("PumpkinPlot" + i), world);
+			PumpkinPlot plot = PumpkinPlot.fromNbt(nbt.getCompound("PumpkinPlot" + i), world, this);
 			addPlot(plot);
 		}
 		lastPumpkin = ((PumpkinPlot) plots.toArray()[plots.size() - 1]).pumpkin;
