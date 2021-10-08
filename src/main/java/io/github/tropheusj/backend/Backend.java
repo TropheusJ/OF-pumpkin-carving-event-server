@@ -12,8 +12,12 @@ import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.structure.StructurePlacementData;
+import net.minecraft.util.BlockRotation;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
+
+import java.util.Random;
 
 import static net.minecraft.server.command.CommandManager.*;
 
@@ -38,7 +42,11 @@ public class Backend implements ModInitializer {
 		if (pair.getRight()) {
 			plot.build();
 		}
+		StructurePlacementData structurePlacement = new StructurePlacementData().setPosition(plot.pumpkin).setRotation(BlockRotation.NONE);
+		Random random = new Random();
+
 		player.teleport(world, plot.pumpkin.getX() + 0.5, plot.pumpkin.getY() + 1, plot.pumpkin.getZ() + 0.5, 180, 0);
+		world.getStructureManager().getStructureOrBlank(Backend.id("test")).place(world, plot.pumpkin,  plot.pumpkin, structurePlacement, random, 1);
 		return 1;
 	}
 

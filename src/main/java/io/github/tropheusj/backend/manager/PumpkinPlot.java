@@ -7,7 +7,9 @@ import net.minecraft.block.Blocks;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.structure.StructureManager;
 import net.minecraft.structure.StructurePlacementData;
+import net.minecraft.util.BlockRotation;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -24,6 +26,7 @@ public class PumpkinPlot {
 	public BlockPos northWestUp;
 	public ServerWorld world;
 	public String playerId;
+	public StructureManager structureManager;
 
 	public PumpkinPlot(Manager manager, ServerWorld world, int index, BlockPos pumpkin, String playerId) {
 		this.world = world;
@@ -31,6 +34,7 @@ public class PumpkinPlot {
 		this.pumpkin = pumpkin;
 		this.voteButtonPos = pumpkin.offset(Direction.NORTH, 5).offset(Direction.DOWN, 2);
 		this.playerId = playerId;
+		this.structureManager = world.getStructureManager();
 	}
 
 	private PumpkinPlot() {
@@ -43,7 +47,11 @@ public class PumpkinPlot {
 		world.spawnEntity(armorStand);
 		ItemInteractEvents.claimLandHandling(manager.dummyPlayer, pumpkin.add(-1, -1, -1));
 		ItemInteractEvents.claimLandHandling(manager.dummyPlayer, pumpkin.add(1, 1, 1));
-		world.getStructureManager().getStructure(Backend.id("test")).get().place(world,pumpkin,pumpkin, new StructurePlacementData(), new Random(), 1);
+		StructurePlacementData structurePlacement = new StructurePlacementData().setPosition(pumpkin).setRotation(BlockRotation.NONE);
+		Random random = new Random();
+		structureManager.getStructureOrBlank(Backend.id("test")).place(world, pumpkin, pumpkin, structurePlacement, random, 1);
+		System.out.println(world);
+		System.out.println(pumpkin);
 	}
 
 	public static PumpkinPlot fromNbt(NbtCompound nbt, ServerWorld world, Manager manager) {
