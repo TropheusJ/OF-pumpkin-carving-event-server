@@ -2,6 +2,12 @@ package io.github.tropheusj.backend.manager;
 
 import com.mojang.authlib.GameProfile;
 
+import dev.cafeteria.fakeplayerapi.FakePlayerAPI;
+import dev.cafeteria.fakeplayerapi.server.FakePlayerBuilder;
+import dev.cafeteria.fakeplayerapi.server.FakeServerPlayer;
+import dev.cafeteria.fakeplayerapi.server.FakeServerPlayerFactory;
+import io.github.flemmli97.flan.Flan;
+import io.github.tropheusj.backend.Backend;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -12,6 +18,7 @@ import net.minecraft.world.PersistentState;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -19,8 +26,8 @@ import java.util.Map;
 import java.util.UUID;
 
 public class Manager extends PersistentState {
-	public static final BlockPos SPAWN = new BlockPos(-5, 70, -5);
-	public static final BlockPos FIRST_PUMPKIN = new BlockPos(0, 70, 0);
+	public static final BlockPos SPAWN = new BlockPos(0, 4, 0);
+	public static final BlockPos FIRST_PUMPKIN = SPAWN.add(20, 1, 20);
 	public final ServerWorld world;
 	public Collection<PumpkinPlot> plots;
 	public final Map<String, PumpkinPlot> playersToPlots = new HashMap<>();
@@ -30,7 +37,11 @@ public class Manager extends PersistentState {
 	public Manager(ServerWorld toManage, @Nullable NbtCompound nbt) {
 		this.world = toManage;
 		// one of Ella's alts, we need a dummy player to hold the server wide claims
-		dummyPlayer = new ServerPlayerEntity(world.getServer(), world, new GameProfile(UUID.fromString("c0a17033-6f53-4492-8987-eaa147317202"), "DeesseLouve"));
+		dummyPlayer = new ManagerFakePlayer(
+				new FakePlayerBuilder(Backend.id("manager_player")),
+				world.getServer(),
+				world,
+				new GameProfile(UUID.fromString("c0a17033-6f53-4492-8987-eaa147317202"), "DeesseLouve"));
 		if (nbt != null) {
 			readNbt(nbt);
 		}
@@ -45,7 +56,7 @@ public class Manager extends PersistentState {
 		String playerId = player.getUuidAsString();
 		PumpkinPlot plot = playersToPlots.get(playerId);
 		if (plot != null) return new Pair<>(plot, false);
-		plot = new PumpkinPlot(this, world, playersToPlots.size(), lastPumpkin.offset(Direction.WEST, 7), playerId);
+		plot = new PumpkinPlot(this, world, playersToPlots.size(), lastPumpkin.offset(Direction.WEST, 7), player);
 		addPlot(plot);
 		return new Pair<>(plot, true);
 	}

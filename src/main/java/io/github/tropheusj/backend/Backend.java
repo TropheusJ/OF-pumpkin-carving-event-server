@@ -9,6 +9,7 @@ import io.github.tropheusj.backend.manager.PumpkinPlot;
 import io.github.tropheusj.backend.manager.ServerWorldExtensions;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -39,13 +40,13 @@ public class Backend implements ModInitializer {
 		ServerPlayerEntity player = context.getSource().getPlayer();
 		Pair<PumpkinPlot, Boolean> pair = manager.getOrCreatePlot(player);
 		PumpkinPlot plot = pair.getLeft();
-		if (pair.getRight()) {
+//		if (pair.getRight()) {
 			plot.build();
-		}
-		StructurePlacementData structurePlacement = new StructurePlacementData().setPosition(plot.pumpkin).setRotation(BlockRotation.NONE);
+//		}
+		StructurePlacementData structurePlacement = new StructurePlacementData().setPosition(plot.pumpkin).setRotation(BlockRotation.CLOCKWISE_180);
 		Random random = new Random();
 
-		player.teleport(world, plot.pumpkin.getX() + 0.5, plot.pumpkin.getY() + 1, plot.pumpkin.getZ() + 0.5, 180, 0);
+//		player.teleport(world, plot.pumpkin.getX() + 0.5, plot.pumpkin.getY() + 1, plot.pumpkin.getZ() + 0.5, 180, 0);
 		world.getStructureManager().getStructureOrBlank(Backend.id("test")).place(world, plot.pumpkin,  plot.pumpkin, structurePlacement, random, 1);
 		return 1;
 	}
@@ -57,6 +58,7 @@ public class Backend implements ModInitializer {
 
 	public static int clearPlotsCommand(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
 		Manager manager = getManager(context.getSource().getWorld());
+		manager.plots.forEach(plot -> plot.armorStand.ifPresent(ArmorStandEntity::kill));
 		manager.plots.clear();
 		manager.playersToPlots.clear();
 		manager.lastPumpkin = Manager.FIRST_PUMPKIN;

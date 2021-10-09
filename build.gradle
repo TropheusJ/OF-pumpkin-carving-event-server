@@ -14,6 +14,12 @@ group = project.maven_group
 repositories {
     maven {url = "https://api.modrinth.com/maven"}
     maven {url = "https://gitlab.com/api/v4/projects/21830712/packages/maven"}
+    maven {
+        url = 'https://maven.cafeteria.dev'
+        content {
+            includeGroup 'dev.cafeteria'
+        }
+    }
 }
 
 dependencies {
@@ -24,8 +30,7 @@ dependencies {
     modImplementation "maven.modrinth:lazydfu:0.1.2"
 
     modImplementation("io.github.flemmli97:flan:${minecraft_version}-1.6.2") {transitive = false}
-//    modCompileOnly("io.github.flemmli97:flan:${minecraft_version}-1.6.2:api") {transitive = false}
-//    modRuntime("io.github.flemmli97:flan:${minecraft_version}-1.6.2") {transitive = false}
+    modImplementation"dev.cafeteria:fake-player-api:0.2.0"
 }
 
 processResources {
