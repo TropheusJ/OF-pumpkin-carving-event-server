@@ -1,19 +1,27 @@
 package io.github.tropheusj.backend;
 
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
 public class Constants {
-	public static final Utils.TPTarget
-	// spawns
-			SPAWN = new Utils.TPTarget(-12, 7, 28, 90, 0),
-			ROUND_2_SPAWN = new Utils.TPTarget(14, 4, 4, 90, 0),
 	// teleports
-			COMMENTATOR_ROOM = new Utils.TPTarget(0, 0, 0, 0, 0);
+	public static final Utils.TPTarget
+			SPAWN = new Utils.TPTarget(-12.5f, 7, 28.5f, 90, 0),
+			ROUND_2_SPAWN = new Utils.TPTarget(14.5f, 4, 4.5f, 90, 0),
+			COMMENTATOR_ROOM = new Utils.TPTarget(0, 0, 0, 0, 0),
+			CAMERA_MANSION = new Utils.TPTarget(-8.5f, 10, 28.5f, 90, 0),
+			CAMERA_PUMPKINS = new Utils.TPTarget(25.5f, 5, 29.5f, 180, 0);
 
+	// pumpkins
 	public static final BlockPos
-			// pumpkins
 			FIRST_PUMPKIN = new BlockPos(20, 5, 20),
 			FIRST_ROUND_2_PUMPKIN = new BlockPos(6, 7, 11);
+
+	// incoming packets from camera client
+	public static final Identifier
+			COMMENTATOR_TP = new Identifier("client", "commentator_tp"),
+			PUMPKINS_TP = new Identifier("client", "pumpkins_tp"),
+			MANSION_TP = new Identifier("client", "mansion_tp");
 
 	// players
 	public static final String[] TP_BLACKLIST = new String[] {

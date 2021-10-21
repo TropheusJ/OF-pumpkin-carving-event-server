@@ -22,6 +22,6 @@ public class Utils {
 		player.teleport(player.getServerWorld(), target.x(), target.y(), target.z(), target.yaw(), target.pitch());
 	}
 
-	public record TPTarget(int x, int y, int z, float yaw, float pitch) {
+	public record TPTarget(float x, float y, float z, float yaw, float pitch) {
 	}
 }

@@ -12,6 +12,7 @@ public class Backend implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		Commands.init();
+		Receivers.init();
 	}
 
 	public static Identifier id(String path) {
