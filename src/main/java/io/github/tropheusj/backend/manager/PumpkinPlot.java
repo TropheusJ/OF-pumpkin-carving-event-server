@@ -1,12 +1,16 @@
 package io.github.tropheusj.backend.manager;
 
+import java.util.List;
+import java.util.UUID;
+
+import com.mojang.authlib.GameProfile;
+
 import io.github.flemmli97.flan.claim.ClaimStorage;
-import io.github.flemmli97.flan.event.ItemInteractEvents;
-import io.github.flemmli97.flan.player.PlayerClaimData;
 import io.github.tropheusj.backend.Backend;
-import io.github.tropheusj.backend.mixin.ArmorStandEntityAccessor;
+import io.github.tropheusj.backend.Constants;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -14,17 +18,8 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureManager;
 import net.minecraft.structure.StructurePlacementData;
 import net.minecraft.util.BlockRotation;
-import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
 
 public class PumpkinPlot {
 	public int index;
@@ -34,8 +29,6 @@ public class PumpkinPlot {
 	public String playerId;
 	private ServerPlayerEntity player;
 	public StructureManager structureManager;
-	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-	public Optional<ArmorStandEntity> armorStand = Optional.empty();
 
 	public PumpkinPlot(Manager manager, ServerWorld world, int index, BlockPos pumpkin, ServerPlayerEntity player) {
 		this.manager = manager;
@@ -46,32 +39,31 @@ public class PumpkinPlot {
 		this.playerId = player.getUuidAsString();
 		this.structureManager = world.getStructureManager();
 		List<ArmorStandEntity> armorStands = world.getEntitiesByClass(ArmorStandEntity.class, new Box(pumpkin.up()), entity -> true);
-		if (armorStands.size() > 0) armorStand = Optional.of(armorStands.get(0));
 	}
 
 	private PumpkinPlot() {
 	}
 
 	public void build() {
-		// armor stand for voting datapack
-		ArmorStandEntity armorStand = new ArmorStandEntity(world, pumpkin.getX() + 0.5, pumpkin.getY() + 1, pumpkin.getZ() + 0.5);
-		armorStand.setInvisible(true);
-		((ArmorStandEntityAccessor) armorStand).invokeSetMarker(true);
-		world.spawnEntity(armorStand);
-		this.armorStand = Optional.of(armorStand);
-		// player claim creation
-		ClaimStorage storage = ClaimStorage.get(getPlayer().getServerWorld());
-		storage.createClaim(pumpkin.add(-1, -1, -1), pumpkin.add(1, 1, 1), getPlayer());
-		// server claim creation
-//		for (Pair<BlockPos,BlockPos> positions : getClaimPositions(pumpkin)) {
-//			data.setEditingCorner(positions.getLeft());
-//			storage.createClaim(data.editingCorner(), positions.getRight(), manager.dummyPlayer);
-//		}
+		// claim creation
+		createServerClaims();
+		ClaimStorage.get(getPlayer().getServerWorld()).createClaim(pumpkin, pumpkin, getPlayer());
 		// structure placing
-		BlockPos corner = BlockPos.ORIGIN.west(22);
-		StructurePlacementData structurePlacement = new StructurePlacementData().setRotation(BlockRotation.CLOCKWISE_90).setPosition(corner);
-		Random random = new Random();
-		structureManager.getStructureOrBlank(Backend.id("pumpkin_plot")).place(world, corner, corner, structurePlacement, random, Block.NOTIFY_LISTENERS);
+		BlockPos corner = pumpkin.north(6).east(6).down(2);
+		StructurePlacementData structurePlacement = new StructurePlacementData().setRotation(BlockRotation.CLOCKWISE_90);
+		structureManager.getStructureOrBlank(Backend.id("pumpkin_plot")).place(world, corner, corner, structurePlacement, world.random, Block.NOTIFY_LISTENERS);
+		BlockPos headPos = pumpkin.south(3).east(3).down();
+		world.getBlockEntity(headPos, BlockEntityType.SKULL).ifPresent(skull -> skull.setOwner(getSkullOwner()));
+		world.setBlockState(pumpkin.down(3), Blocks.BEDROCK.getDefaultState());
+		world.setBlockState(pumpkin.down(3).south(), Blocks.BEDROCK.getDefaultState());
+
+		int chance = world.random.nextInt(101);
+		Block decorPumpkin;
+		if (chance < 4) decorPumpkin = Blocks.MELON;
+		else if (chance < 30) decorPumpkin = Blocks.PUMPKIN;
+		else if (chance < 60) decorPumpkin = Blocks.CARVED_PUMPKIN;
+		else decorPumpkin = Blocks.JACK_O_LANTERN;
+		world.setBlockState(pumpkin.south(10), decorPumpkin.getDefaultState());
 	}
 
 	public ServerPlayerEntity getPlayer() {
@@ -106,8 +98,29 @@ public class PumpkinPlot {
 		return nbt;
 	}
 
-	public static List<Pair<BlockPos, BlockPos>> getClaimPositions(BlockPos pumpkin) {
-		BlockPos northWestUp = pumpkin.west(8).north(5).up();
-		return null;
+	public void createServerClaims() {
+		ServerPlayerEntity player = manager.dummyPlayer;
+		ClaimStorage storage = ClaimStorage.get((ServerWorld) player.world);
+		// rectangle north of pumpkin
+		BlockPos northCorner1 = pumpkin.west(3).north(6).down(2);
+		BlockPos northCorner2 = pumpkin.east(6).north().down(2);
+		storage.createClaim(northCorner1, northCorner2, player);
+		// rectangle east of pumpkin
+		BlockPos eastCorner1 = northCorner2.south();
+		BlockPos eastCorner2 = pumpkin.south(14).east().down(2);
+		storage.createClaim(eastCorner1, eastCorner2, player);
+		// rectangle south of pumpkin
+		BlockPos southCorner1 = eastCorner2.west();
+		BlockPos southCorner2 = pumpkin.west(3).south(2).down(2);
+		storage.createClaim(southCorner1, southCorner2, player);
+		// rectangle west of pumpkin
+		BlockPos westCorner1 = pumpkin.west().down(2);
+		BlockPos westCorner2 = westCorner1.west(2).south();
+		storage.createClaim(westCorner1, westCorner2, player);
+	}
+
+	public GameProfile getSkullOwner() {
+		String[] profile = Constants.SKULL_PROFILES[world.random.nextInt(Constants.SKULL_PROFILES.length)];
+		return new GameProfile(UUID.fromString(profile[1]), profile[0]);
 	}
 }

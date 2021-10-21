@@ -1,5 +1,7 @@
 package io.github.tropheusj.backend.manager;
 
+import java.util.UUID;
+
 import com.mojang.authlib.GameProfile;
 
 import dev.cafeteria.fakeplayerapi.server.FakePlayerBuilder;
@@ -9,8 +11,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 
-import java.util.UUID;
-
 public class ManagerFakePlayer extends FakeServerPlayer {
 	public ManagerFakePlayer(FakePlayerBuilder builder, MinecraftServer server, ServerWorld world, GameProfile profile) {
 		super(builder, server, world, profile);
@@ -18,7 +18,6 @@ public class ManagerFakePlayer extends FakeServerPlayer {
 
 	@Override
 	public void sendMessage(Text message, MessageType type, UUID sender) {
-		System.out.println(message.asString());
 		System.out.println(message.getString());
 		super.sendMessage(message, type, sender);
 	}

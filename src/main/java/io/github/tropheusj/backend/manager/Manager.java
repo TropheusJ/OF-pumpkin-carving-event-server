@@ -1,12 +1,19 @@
 package io.github.tropheusj.backend.manager;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import io.github.tropheusj.backend.Constants;
+
+import org.jetbrains.annotations.Nullable;
+
 import com.mojang.authlib.GameProfile;
 
-import dev.cafeteria.fakeplayerapi.FakePlayerAPI;
 import dev.cafeteria.fakeplayerapi.server.FakePlayerBuilder;
-import dev.cafeteria.fakeplayerapi.server.FakeServerPlayer;
-import dev.cafeteria.fakeplayerapi.server.FakeServerPlayerFactory;
-import io.github.flemmli97.flan.Flan;
 import io.github.tropheusj.backend.Backend;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -16,23 +23,14 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.PersistentState;
 
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 public class Manager extends PersistentState {
-	public static final BlockPos SPAWN = new BlockPos(0, 4, 0);
-	public static final BlockPos FIRST_PUMPKIN = SPAWN.add(20, 1, 20);
 	public final ServerWorld world;
-	public Collection<PumpkinPlot> plots;
+	public Collection<PumpkinPlot> plots = Collections.emptyList();
 	public final Map<String, PumpkinPlot> playersToPlots = new HashMap<>();
-	public BlockPos lastPumpkin = FIRST_PUMPKIN;
+	public BlockPos lastPumpkin = Constants.FIRST_PUMPKIN;
 	public ServerPlayerEntity dummyPlayer;
+	public boolean round1 = false;
+	public boolean round2 = false;
 
 	public Manager(ServerWorld toManage, @Nullable NbtCompound nbt) {
 		this.world = toManage;
@@ -56,7 +54,7 @@ public class Manager extends PersistentState {
 		String playerId = player.getUuidAsString();
 		PumpkinPlot plot = playersToPlots.get(playerId);
 		if (plot != null) return new Pair<>(plot, false);
-		plot = new PumpkinPlot(this, world, playersToPlots.size(), lastPumpkin.offset(Direction.WEST, 7), player);
+		plot = new PumpkinPlot(this, world, playersToPlots.size(), lastPumpkin.offset(Direction.EAST, 10), player);
 		addPlot(plot);
 		return new Pair<>(plot, true);
 	}
@@ -69,16 +67,20 @@ public class Manager extends PersistentState {
 	}
 
 	public void readNbt(NbtCompound nbt) {
+		round1 = nbt.getBoolean("Round1");
+		round2 = nbt.getBoolean("Round2");
 		int plotCount = nbt.getInt("PumpkinPlotCount");
 		for (int i = 0; i < plotCount; i++) {
 			PumpkinPlot plot = PumpkinPlot.fromNbt(nbt.getCompound("PumpkinPlot" + i), world, this);
 			addPlot(plot);
 		}
-		lastPumpkin = ((PumpkinPlot) plots.toArray()[plots.size() - 1]).pumpkin;
+		lastPumpkin = plots != null && plots.size() > 0 ? ((PumpkinPlot) plots.toArray()[plots.size() - 1]).pumpkin : Constants.FIRST_PUMPKIN;
 	}
 
 	@Override
 	public NbtCompound writeNbt(NbtCompound nbt) {
+		nbt.putBoolean("Round1", round1);
+		nbt.putBoolean("Round2", round2);
 		nbt.putInt("PumpkinPlotCount", playersToPlots.size());
 		List<PumpkinPlot> plots = playersToPlots.values().stream().toList();
 		for (int i = 0; i < playersToPlots.size(); i++) {

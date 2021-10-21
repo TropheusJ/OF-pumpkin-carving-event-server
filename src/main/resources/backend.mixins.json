@@ -4,8 +4,9 @@
   "package": "io.github.tropheusj.backend.mixin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-    "ArmorStandEntityAccessor",
-    "ServerWorldMixin"
+    "ServerWorldMixin",
+    "flan.ClaimDisplayMixin",
+    "flan.ClaimStorageMixin"
   ],
   "client": [
   ],
