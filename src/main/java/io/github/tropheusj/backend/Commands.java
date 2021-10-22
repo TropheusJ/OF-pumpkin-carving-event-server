@@ -19,12 +19,16 @@ import io.github.tropheusj.backend.manager.Place;
 import io.github.tropheusj.backend.manager.PumpkinPlot;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.minecraft.command.argument.EntityArgumentType;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameMode;
 
 import java.util.List;
@@ -32,7 +36,7 @@ import java.util.List;
 public class Commands {
 	public static int pumpkinCommand(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
 		ServerWorld world = context.getSource().getWorld();
-		Manager manager = Backend.getManager(world);
+		Manager manager = Utils.getManager(world);
 		if (!manager.round1) {
 			throw new CommandSyntaxException(new SimpleCommandExceptionType(new LiteralText("")), new LiteralText("It is not currently round 1."));
 		}
@@ -43,8 +47,10 @@ public class Commands {
 			plot.build();
 			player.sendMessage(purpleMessage("Your pumpkin plot has been created."), false);
 		}
-//		player.getInventory().insertStack(new ItemStack(Registry.ITEM.get(new Identifier("carvepump", "netherite_carver"))));
-//		player.changeGameMode(GameMode.SURVIVAL);
+		ItemStack item = new ItemStack(Registry.ITEM.get(new Identifier("carvepump", "netherite_carver")));
+		item.getOrCreateNbt().putBoolean("Unbreakable", true);
+		player.getInventory().insertStack(item);
+		player.changeGameMode(GameMode.SURVIVAL);
 		player.teleport(world, plot.pumpkin.getX() + 0.5, plot.pumpkin.getY() - 1, plot.pumpkin.getZ() + 1.5, 0, 0);
 		player.sendMessage(goldMessage("Welcome to your pumpkin plot!"), false);
 		player.sendMessage(goldMessage("Use /mansion to leave."), false);
@@ -53,12 +59,8 @@ public class Commands {
 
 	public static int mansionCommand(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
 		ServerPlayerEntity player = context.getSource().getPlayer();
-//		player.getInventory().remove(
-//				itemStack -> Registry.ITEM.getId(itemStack.getItem()).toString().equals("carvepump:netherite_carver"),
-//				1,
-//				player.playerScreenHandler.getCraftingInput()
-//		);
-//		player.changeGameMode(GameMode.ADVENTURE);
+		player.getInventory().clear();
+		player.changeGameMode(GameMode.ADVENTURE);
 		Utils.tpPlayer(player, Constants.SPAWN);
 		player.sendMessage(goldMessage("Welcome to the mansion!"), false);
 		player.sendMessage(goldMessage("Use /pumpkin to return to your plot."), false);
@@ -66,7 +68,7 @@ public class Commands {
 	}
 
 	public static int clearPlotsCommand(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-		Manager manager = Backend.getManager(context.getSource().getWorld());
+		Manager manager = Utils.getManager(context.getSource().getWorld());
 		ClaimStorage storage = ClaimStorage.get((ServerWorld) manager.dummyPlayer.world);
 		for (Claim claim : storage.allClaimsFromPlayer(manager.dummyPlayer.getUuid())) {
 			storage.deleteClaim(claim, true, EnumEditMode.DEFAULT, (ServerWorld) manager.dummyPlayer.world);
@@ -91,14 +93,22 @@ public class Commands {
 		return 1;
 	}
 
+	public static int round0Command(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+		Manager manager = Utils.getManager(context.getSource().getWorld());
+		manager.round1 = false;
+		manager.round2 = false;
+		context.getSource().sendFeedback(new LiteralText("Rounds reset."), false);
+		return 1;
+	}
+
 	public static int round1Command(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
 		ServerWorld world = context.getSource().getWorld();
-		Manager manager = Backend.getManager(world);
+		Manager manager = Utils.getManager(world);
 		if (manager.round1) {
 			context.getSource().sendFeedback(new LiteralText("Round 1 has already begun.").formatted(Formatting.RED), false);
 			return 1;
 		}
-		Backend.getManager(world).round1 = true;
+		manager.round1 = true;
 		world.getPlayers().forEach(player -> {
 			player.sendMessage(goldMessage("Round 1 has begun!"), false);
 			player.sendMessage(goldMessage("Use /pumpkin to get started!"), false);
@@ -114,11 +124,12 @@ public class Commands {
 				break;
 			}
 		}
+
 		if (!canPlace) {
 			throw new CommandSyntaxException(new SimpleCommandExceptionType(new LiteralText("")), new LiteralText("A place has a null player! Set them again!"));
 		}
 
-		Manager manager = Backend.getManager(context.getSource().getWorld());
+		Manager manager = Utils.getManager(context.getSource().getWorld());
 		manager.round2 = true;
 		manager.round1 = false;
 		List<ServerPlayerEntity> players = context.getSource().getWorld().getPlayers();
@@ -140,15 +151,37 @@ public class Commands {
 			for (String id : Constants.TP_BLACKLIST) {
 				if (playerId.equals(id)) return;
 			}
+			player.getInventory().clear();
 			if (Place.isInPlace(player)) return;
 			player.changeGameMode(GameMode.ADVENTURE);
-//			player.getInventory().remove(
-//				itemStack -> Registry.ITEM.getId(itemStack.getItem()).toString().equals("carvepump:netherite_carver"),
-//				1,
-//				player.playerScreenHandler.getCraftingInput()
-//			);
 			Utils.tpPlayer(player, Constants.ROUND_2_SPAWN);
 		});
+
+		return 1;
+	}
+
+	public static int endGameCommand(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+		Manager manager = Utils.getManager(context.getSource().getWorld());
+		manager.gameOver = true;
+		for (Place place : Place.values()) {
+			if (place.player != null) {
+				Utils.tpPlayer(place.player, place.podiumPos);
+			}
+		}
+
+		outer:
+		for (ServerPlayerEntity player : context.getSource().getWorld().getPlayers()) {
+			for (String id : Constants.TP_BLACKLIST) {
+				if (id.equals(player.getUuidAsString())) continue outer;
+			}
+			if (!Place.isInPlace(player)) {
+				Utils.tpPlayer(player, Constants.SPECTATORS);
+			}
+			player.changeGameMode(GameMode.ADVENTURE);
+			player.getInventory().clear();
+			player.sendMessage(goldMessage("The competition has concluded!"), false);
+			player.sendMessage(goldMessage("Congratulations to the winners!"), false);
+		}
 
 		return 1;
 	}
@@ -172,8 +205,12 @@ public class Commands {
 					.executes(Commands::clearPlotsCommand));
 			dispatcher.register(literal("round")
 					.requires(source -> source.hasPermissionLevel(2))
+					.then(literal("0").executes(Commands::round0Command))
 					.then(literal("1").executes(Commands::round1Command))
 					.then(literal("2").executes(Commands::round2Command)));
+			dispatcher.register(literal("endGame")
+					.requires(source -> source.hasPermissionLevel(2))
+					.executes(Commands::endGameCommand));
 			dispatcher.register(literal("setPlace")
 					.requires(source -> source.hasPermissionLevel(2))
 					.then(argument("place", IntegerArgumentType.integer())

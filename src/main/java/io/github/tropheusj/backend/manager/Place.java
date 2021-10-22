@@ -1,6 +1,7 @@
 package io.github.tropheusj.backend.manager;
 
 import io.github.tropheusj.backend.Constants;
+import io.github.tropheusj.backend.Utils;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import net.minecraft.server.world.ServerWorld;
@@ -12,20 +13,32 @@ import net.minecraft.world.GameMode;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.UUID;
+
 import static io.github.tropheusj.backend.Utils.purpleMessage;
 
 public enum Place {
-	FIRST,
-	SECOND,
-	THIRD
+	FIRST(Constants.FIRST),
+	SECOND(Constants.SECOND),
+	THIRD(Constants.THIRD)
 
 	;
 
 	@Nullable
 	public ServerPlayerEntity player;
+	@Nullable
+	public String playerId;
+	public Utils.TPTarget podiumPos;
 
-	public void setPlayer(ServerPlayerEntity player) {
+	Place(Utils.TPTarget podiumPos) {
+		this.podiumPos = podiumPos;
+	}
+
+	public void setPlayer(@Nullable ServerPlayerEntity player) {
 		this.player = player;
+		if (player != null) {
+			playerId = player.getUuidAsString();
+		}
 	}
 
 	public void init() throws IllegalStateException {

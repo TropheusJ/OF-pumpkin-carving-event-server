@@ -9,12 +9,13 @@ import java.util.UUID;
 
 import io.github.tropheusj.backend.Constants;
 
+import io.github.tropheusj.backend.Utils;
+
 import org.jetbrains.annotations.Nullable;
 
 import com.mojang.authlib.GameProfile;
 
 import dev.cafeteria.fakeplayerapi.server.FakePlayerBuilder;
-import io.github.tropheusj.backend.Backend;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -31,12 +32,13 @@ public class Manager extends PersistentState {
 	public ServerPlayerEntity dummyPlayer;
 	public boolean round1 = false;
 	public boolean round2 = false;
+	public boolean gameOver = false;
 
 	public Manager(ServerWorld toManage, @Nullable NbtCompound nbt) {
 		this.world = toManage;
 		// one of Ella's alts, we need a dummy player to hold the server wide claims
 		dummyPlayer = new ManagerFakePlayer(
-				new FakePlayerBuilder(Backend.id("manager_player")),
+				new FakePlayerBuilder(Utils.id("manager_player")),
 				world.getServer(),
 				world,
 				new GameProfile(UUID.fromString("c0a17033-6f53-4492-8987-eaa147317202"), "DeesseLouve"));
@@ -46,7 +48,6 @@ public class Manager extends PersistentState {
 	}
 
 	public void tick() {
-
 	}
 
 	// boolean - true if plot was just created

@@ -8,6 +8,7 @@ import com.mojang.authlib.GameProfile;
 import io.github.flemmli97.flan.claim.ClaimStorage;
 import io.github.tropheusj.backend.Backend;
 import io.github.tropheusj.backend.Constants;
+import io.github.tropheusj.backend.Utils;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntityType;
@@ -38,7 +39,6 @@ public class PumpkinPlot {
 		this.player = player;
 		this.playerId = player.getUuidAsString();
 		this.structureManager = world.getStructureManager();
-		List<ArmorStandEntity> armorStands = world.getEntitiesByClass(ArmorStandEntity.class, new Box(pumpkin.up()), entity -> true);
 	}
 
 	private PumpkinPlot() {
@@ -51,7 +51,7 @@ public class PumpkinPlot {
 		// structure placing
 		BlockPos corner = pumpkin.north(6).east(6).down(2);
 		StructurePlacementData structurePlacement = new StructurePlacementData().setRotation(BlockRotation.CLOCKWISE_90);
-		structureManager.getStructureOrBlank(Backend.id("pumpkin_plot")).place(world, corner, corner, structurePlacement, world.random, Block.NOTIFY_LISTENERS);
+		structureManager.getStructureOrBlank(Utils.id("pumpkin_plot")).place(world, corner, corner, structurePlacement, world.random, Block.NOTIFY_LISTENERS);
 		BlockPos headPos = pumpkin.south(3).east(3).down();
 		world.getBlockEntity(headPos, BlockEntityType.SKULL).ifPresent(skull -> skull.setOwner(getSkullOwner()));
 		world.setBlockState(pumpkin.down(3), Blocks.BEDROCK.getDefaultState());

@@ -4,6 +4,8 @@
   "package": "io.github.tropheusj.backend.mixin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
+    "PlayerManagerMixin",
+    "ServerPlayNetworkHandlerMixin",
     "ServerWorldMixin",
     "flan.ClaimDisplayMixin",
     "flan.ClaimStorageMixin"

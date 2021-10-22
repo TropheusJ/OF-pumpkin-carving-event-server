@@ -30,7 +30,8 @@ dependencies {
     modImplementation "maven.modrinth:lazydfu:0.1.2"
 
     modImplementation("io.github.flemmli97:flan:${minecraft_version}-1.6.2") {transitive = false}
-    modImplementation"dev.cafeteria:fake-player-api:0.2.0"
+    modImplementation("dev.cafeteria:fake-player-api:0.2.0")
+    include("dev.cafeteria:fake-player-api:0.2.0")
 }
 
 processResources {
